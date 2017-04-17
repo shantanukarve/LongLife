@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+    <!--this doesn't seem to help-->
+    <meta http-equiv="Access-Control-Allow-Origin" content="*"/>
+    <title>Process local CSV file</title>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  </head>
+  <body>
+    <script>
+       var rowToHtml = function( row ) {
+         var result = "";
+         for (key in row) {
+           result += key + ": " + row[key] + "<br/>"
+         }
+         return result;
+       }
+
+       var previewCsvUrl = function( csvUrl ) {
+         d3.csv( csvUrl, function( rows ) {
+           d3.select("div#preview").html(
+             "<b>First row:</b><br/>" + rowToHtml( rows[0] ));
+         })
+       }
+
+       d3.select("html")
+          .style("height","100%")
+
+       d3.select("body")
+          .style("height","100%")
+          .style("font", "12px sans-serif")
+
+        .append("input")
+          .attr("type", "file")
+          .attr("accept", ".csv")
+          .style("margin", "5px")
+          .on("change", function() {
+            var file = d3.event.target.files[0];
+            if (file) {
+              var reader = new FileReader();
+                reader.onloadend = function(evt) {
+                  var dataUrl = evt.target.result;
+                  // The following call results in an "Access denied" error in IE.
+                  previewCsvUrl(dataUrl);
+              };
+             reader.readAsDataURL(file);
+            }
+         })
+
+      d3.select("body")
+       .append("div")
+         .attr("id", "preview")
+         .style("margin", "5px")
+
+    // Initialize with csv file from server
+    previewCsvUrl("test.csv")
+
+    </script>
+  </body>
+</html>
+
