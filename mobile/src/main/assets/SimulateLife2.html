@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <head>
 <title>Years You Have Left to Live, Probably</title>
-<link rel="stylesheet" href="style_print.css" media="print" type="text/css" />
-<link rel="stylesheet" href="style_mobile.css" media="screen and (min-device-width: 481px)" type="text/css" />
+<!-- <link rel="stylesheet" href="style_print.css" media="print" type="text/css" /> -->
+<link rel="stylesheet" href="style.css" media="screen and (min-device-width: 481px)" type="text/css" />
 <link type="text/css" rel="stylesheet" media="only screen and (max-device-width: 480px)" href="style_mobile.css" />
 <!-- new androids -->
 <link rel="stylesheet" media="screen and (-webkit-device-pixel-ratio:0.75)" href="style_mobile.css" />
@@ -48,14 +48,31 @@ var counts = Array.apply(null, Array(120)).map(Number.prototype.valueOf,0);
 var bin_counts = Array.apply(null, Array(6)).map(Number.prototype.valueOf,0);
 var bin_threshold = d3.scale.threshold().domain([10,20,30,40,50]).range([0,1,2,3,4,5]);
 
+var widthher = window.outerWidth;
+
+//var width_base = window.innerWidth
+//|| document.documentElement.clientWidth
+//|| document.body.clientWidth;
+
+//var height_base = window.innerHeight
+//|| document.documentElement.clientHeight
+//|| document.body.clientHeight;
+
+var width_base =  window.innerWidth;
+var height_base = window.innerHeight;
 
 // Set dimensions
 var margin = {top: 35, right: 0, bottom: 40, left: 50},
-    width = 1090 - margin.left - margin.right,
-    height = 350 - margin.top - margin.bottom;
+    width = width_base - margin.left - margin.right,
+    height = height_base - margin.top - margin.bottom;
 
-//var margin = {top: 3, right: 0, bottom: 4, left: 5},
-//    width = "95%",
+//var margin = {top: 35, right: 0, bottom: 40, left: 50},
+//        width = 1090 - margin.left - margin.right,
+//        height = 350 - margin.top - margin.bottom;
+
+
+//var margin = {top: 35, right: 0, bottom: 40, left: 50},
+//    width = .95*widthher,
 //    height = "95%";
 
 // Set ranges
@@ -101,13 +118,12 @@ var line = d3.svg.line()
 
 // Define SVG object
 var svg = d3.select("#line-chart").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+.attr("width", width + margin.left + margin.right)
+.attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-
-
+var svg_b1 = svg.node().getBBox();
 //d3.csv(dataLoc, type, function(error, life) {
 
 //    x.domain(d3.extent(life, function(d) { return d.age; }));
@@ -264,10 +280,13 @@ function dot_it ( life) {
     //
 
     // Axes
-    svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
+//    svg.append("g")
+//        .attr("class", "x axis")
+//        .call(xAxis);
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + height + ")")
+            .call(xAxis);
 
     svg.append("g")
         .attr("class", "y axis")
