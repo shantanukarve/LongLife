@@ -34,7 +34,7 @@ public class Simulate extends AppCompatActivity {
         });
 //        mWebView.loadUrl("http://www.example.com");
 //        mWebView.loadUrl("file:///android_asset/example.html");
-        mWebView.loadUrl("file:///android_asset/SimulateLife2.html");
+        mWebView.loadUrl("file:///android_asset/vertical.html");
 
         // Capture the layout's TextView and set the string as its text
 //        TextView textView = (TextView) findViewById(R.id.textView3);

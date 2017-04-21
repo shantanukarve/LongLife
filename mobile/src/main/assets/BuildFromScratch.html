@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <script src="d3-3-5-5.min.js"></script>
+</head>
+
+<body>
+  <div>
+
+  </div>
+  <script>
+    //make the svg container
+    var svgContainer = d3.select("body").append("svg")
+      .attr("width", "100%")
+      .attr("height", "100%");
+    var w_read = svgContainer.attr("width");
+     //make the rectangle
+    var rectangle = svgContainer.append("rect")
+      .attr("x", 150)
+      .attr("y", 50)
+      .attr("width", 50)
+      .attr("height", 140);
+  </script>
+</body>
+
+</html>

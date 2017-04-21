@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<head>
+    <title>Years You Have Left to Live, Probably</title>
+    <!-- <link rel="stylesheet" href="style_print.css" media="print" type="text/css" /> -->
+    <link rel="stylesheet" href="style.css" media="screen and (min-device-width: 481px)" type="text/css" />
+    <link type="text/css" rel="stylesheet" media="only screen and (max-device-width: 480px)" href="style_mobile.css" />
+    <!-- new androids -->
+    <link rel="stylesheet" media="screen and (-webkit-device-pixel-ratio:0.75)" href="style_mobile.css" />
+    <link rel="stylesheet" href="style_mobile.css" media="handheld" type="text/css" />
+    <!--[if IE]>
+    <link rel="stylesheet" href="style.css" media="screen" type="text/css" />
+    <![endif]-->
+    <!-- tell iPhone not to shrink mobile website -->
+    <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0,user-scalable=0"/>
+
+    <link href='https://fonts.googleapis.com/css?family=Inconsolata' rel='stylesheet' type='text/css'>
+</head>
+<div id="main-wrapper">
+
+    <div id="line-chart"></div>
+
+    <div id="bars"></div>
+
+    <div id="debug"></div>
+    <div id="age">
+        <div id="agevalue"></div>
+        <div id="sliderholder"></div>
+    </div>
+</div>
+
+<script src="d3-3-5-5.min.js"></script>
+<script src="Simulate.js"></script>
+
+<script>
+var USER_AGE = 27;
+var USER_SEX = 'female';
+var CURR_AGE = 0;
+var USER_DURATION = 16; // milliseconds
+
+var paused = false;
+var slider_brushed = false;
+
+// Location of probabilities
+var dataLoc = "http://www.flowingdata.com/projects/2015/life/data/life-table-2011.csv";
+
+// Age counts as sim plays
+var counts = Array.apply(null, Array(120)).map(Number.prototype.valueOf,0);
+var bin_counts = Array.apply(null, Array(6)).map(Number.prototype.valueOf,0);
+var bin_threshold = d3.scale.threshold().domain([10,20,30,40,50]).range([0,1,2,3,4,5]);
+
+var widthher = window.outerWidth;
+
+//var width_base = window.innerWidth
+//|| document.documentElement.clientWidth
+//|| document.body.clientWidth;
+
+//var height_base = window.innerHeight
+//|| document.documentElement.clientHeight
+//|| document.body.clientHeight;
+
+var width_base =  window.innerWidth;
+var height_base = window.innerHeight;
+
+// Set dimensions - chart if offset down and to the right so make widths and heights 2*smaller
+var margin = {top: 35, right: 0.05*width_base, bottom: 40, left: 0.05*width_base},
+    width = width_base - 2*margin.left - margin.right,
+    height = height_base - 2*margin.top - margin.bottom;
+
+//var margin = {top: 35, right: 0, bottom: 40, left: 50},
+//        width = 1090 - margin.left - margin.right,
+//        height = 350 - margin.top - margin.bottom;
+
+
+//var margin = {top: 35, right: 0, bottom: 40, left: 50},
+//    width = .95*widthher,
+//    height = "95%";
+
+// Set ranges
+var x = d3.scale.linear()
+    .domain([0,120])
+    .range([0, width]);
+var y = d3.scale.linear()
+    .domain([0, 1])
+    .range([height, 0]);
+
+// Define axes
+var xAxis = d3.svg.axis().scale(x)
+    .orient("bottom")
+    .ticks(12)
+    .tickFormat(function(d) {
+        return (d);})
+    .tickSize(10);
+var yAxis = d3.svg.axis().scale(y)
+    .orient("left")
+    .ticks(5)
+    .tickFormat(function(d) {
+        return (d*100) + "%";
+    })
+    .tickSize(20);
+
+// Grid lines
+var yAxisLines = d3.svg.axis()
+    .scale(y)
+    .ticks(5)
+    .tickSize(-width)
+    .tickFormat("")
+    .orient("left");
+
+// Define line
+var line = d3.svg.line()
+    .x(function(d) { return x(d.age); })
+    .y(function(d) {
+        if (USER_SEX == "female") return y(1-d.female_prob_death);
+        else return y(1-d.male_prob_death);
+    });
+
+
+
+// Define SVG object old
+var svg = d3.select("#line-chart").append("svg")
+.attr("width", width + margin.left + margin.right)
+.attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+var svg_b1 = svg.node().getBBox();
+//d3.csv(dataLoc, type, function(error, life) {
+
+//    x.domain(d3.extent(life, function(d) { return d.age; }));
+    var life = [
+{  "age":0,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":1,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":2,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":3,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":4,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":5,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":6,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":7,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":8,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":9,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":10,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":11,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":12,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":13,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":14,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":15,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":16,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":17,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":18,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":19,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":20,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":21,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":22,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":23,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":24,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":25,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":26,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":27,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":28,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":29,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":30,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":31,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":32,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":33,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":34,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":35,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":36,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":37,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":38,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":39,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":40,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":41,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":42,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":43,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":44,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":45,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":46,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":47,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":48,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":49,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":50,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":51,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":52,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":53,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":54,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":55,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":56,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":57,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":58,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":59,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":60,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":61,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":62,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":63,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":64,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":65,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":66,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":67,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":68,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":69,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":70,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":71,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":72,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":73,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":74,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":75,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":76,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":77,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":78,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":79,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":80,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":81,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":82,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":83,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":84,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":85,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":86,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":87,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":88,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":89,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":90,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":91,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":92,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":93,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":94,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":95,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":96,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":97,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":98,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":99,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":100,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":101,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":102,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":103,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":104,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":105,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":106,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":107,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":108,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":109,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":110,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":111,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":112,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":113,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":114,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":115,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":116,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":117,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":118,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":119,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
+{  "age":120,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63}
+]
+    //
+    // Setup user controls
+    //
+
+dot_it(life);
+
+function dot_it ( life) {
+
+
+
+
+
+
+
+
+    var age_value = d3.select("#agevalue");
+    age_value.text(USER_AGE);
+
+    var xAge = d3.scale.linear()
+        .domain([0, 116])
+        ;
+
+
+
+
+    //
+    // Probability line chart
+    //
+
+    // Axes
+//    svg.append("g")
+//        .attr("class", "x axis")
+//        .call(xAxis);
+        svg.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + 0 + ")")
+            .call(xAxis);
+
+    svg.append("g")
+        .attr("class", "y axis")
+        .call(yAxis);
+
+    // Current age highlighter
+    var age_highlight = svg.append("g")
+        .attr("class", "agehighlight");
+// This is a shadedarea fromzero to the age of the person
+//    age_highlight.append("rect")
+//        .attr("x", x(0))
+//        .attr("y", y(1))
+//        .attr("width", x(USER_AGE))
+//        .attr("height", y(0)-y(1));
+
+//    age_highlight.append("text")
+//        .attr("transform", "translate("+x((USER_AGE-0.8))+","+y(0.07)+")rotate(-90)")
+//        .text("You are here");
+//    age_highlight.append("line")
+//        .attr("x1", x(USER_AGE))
+//        .attr("x2", x(USER_AGE))
+//        .attr("y1", y(0))
+//        .attr("y2", y(1));
+
+    // Horizontal grid lines
+//    svg.append("g")
+//        .attr("class", "y axis grid")
+//        .call(yAxisLines);
+
+
+    // Axis labels
+    svg.append("text")
+        .attr("x", margin.left)
+        .attr("y", y(1.01))
+        .attr("class", "subtitle")
+        .text("Probability of living to next year");
+    svg.append("text")
+        .attr("x", x(0))
+        .attr("y", height+margin.bottom)
+        .attr("class", "subtitle")
+        .text("Age in years");
+
+    // Annotation
+    ageAnnotate(0, "Escape from the womb");
+    ageAnnotate(18,"Driver's license, gimme");
+    ageAnnotate(21, "Beer, gimme");
+    ageAnnotate(67, "Full retirement");
+    ageAnnotate(78.64, "Overall life expectancy");
+    ageAnnotate(119, "Oldest person to die in US");
+
+    function ageAnnotate(year, text) {
+        svg.append("line")
+            .attr("class", "annotation")
+            .attr("x1", x(year))
+            .attr("x2", x(year))
+            .attr("y1", y(0))
+            .attr("y2", y(1));
+        svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+x((year-0.8))+","+y(0.07)+")rotate(-90)")
+            .text(text);
+    }
+
+
+
+
+    // Baseline - the THICK ONE
+    svg.append("g")
+        .attr("class", "baseline")
+        .attr("transform", "translate(0,"+ height +")")
+      .append("line")
+        .attr("x1", -10)
+        .attr("x2", width)
+        .attr("y1", 0);
+        .attr("y2", 0);
+
+
+
+
+}; // @end d3.csv()
+
+
+
+
+
+
+
+function type(d) {
+    d.age = +d.age;
+    d.male_prob_death = +d.male_prob_death;
+    d.female_prob_death = +d.female_prob_death;
+    return d;
+}
+
+
+
+
+</script>
