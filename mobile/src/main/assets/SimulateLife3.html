@@ -124,6 +124,7 @@ var svg = d3.select("#line-chart").append("svg")
 
 //    x.domain(d3.extent(life, function(d) { return d.age; }));
     var life = [
+
 {  "age":0,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
 {  "age":1,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
 {  "age":2,"male_prob_death":0.001084,"male_years_left":57.07,"female_prob_death":0.000383,"female_years_left":61.63},
@@ -497,7 +498,7 @@ function dot_it ( life) {
     // Data line
     var lifepath = svg.append("path")
         .attr("class", "line")
-        .attr("d", line(life));
+        .attr("d", line(life.slice(0,50)));
 
 
     var indicatorPoint = svg.append("circle")

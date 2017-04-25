@@ -256,6 +256,7 @@ circle.death {
 }
 
 #bars {
+  display: none;
   margin-bottom: 0px;
   border-bottom: 1px dotted #ccc;
 }
