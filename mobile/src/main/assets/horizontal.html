@@ -259,31 +259,9 @@ svg.append("g")
         .attr("class", "subtitle")
         .text("Additional Years to Live");
 
-svg.append("line")
-      .attr("class", "annotation")
-            .attr("x1", x(0))
-            .attr("x2", x(120-USER_AGE))
-            .attr("y1", y(0.5))
-            .attr("y2", y(0.5));
-svg.append("text")
-            .attr("class", "annotation")
-            .attr("transform", "translate("+x((60-USER_AGE/2))+","+y(0.5+.006)+")")
-            .text("AVERAGE CHANCE");
-
-svg.append("line")
-      .attr("class", "annotation")
-            .attr("x1", x(120-USER_AGE))
-            .attr("x2", x(120-USER_AGE))
-            .attr("y1", y(0))
-            .attr("y2", y(0.5));
-svg.append("text")
-            .attr("class", "annotation")
-            .attr("transform", "translate("+x((60-USER_AGE/2))+","+y(0.1)+")rotate(-90)")
-            .text("ADDITIONAL YEARS");
 
 
 
-//            .attr("transform", "translate("+ width + ")")
 
 svg.append("g")
         .attr("class", "y axis")
@@ -294,16 +272,6 @@ svg.append("g")
             .attr("transform", "translate("+x((0-0.007))+","+y((0))+")rotate(-90)")
             .text("Chances this will happen");
 
-var indicatorPoint = svg.append("circle")
-        .attr("r", circle_radius)
-        .attr("transform", function() {
-            if (USER_SEX == "female") {
-                return "translate(" + x(life[CURR_AGE].age-USER_AGE) + "," + y(1) + ")";
-            } else {
-                return "translate(" + x(life[CURR_AGE].age-USER_AGE) + "," + y(1) + ")";
-            }
-        });
-
 
 
 var life_path =      svg.append("path")
@@ -311,6 +279,149 @@ var life_path =      svg.append("path")
                     .attr("d", line(life.slice(USER_AGE,120)));
 
 
+var xat50 = findXatY(.5, life_path) ;
+var xat90 = findXatY(0.9, life_path);
+var xat10 = findXatY(.1, life_path) ;
+
+// 50% chance
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", x(0))
+            .attr("x2", xat50[0])
+            .attr("y1", y(0.5))
+            .attr("y2", y(0.5));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+x(0)+","+y(0.5+.006)+")")
+            .text("AVERAGE CHANCE");
+
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", xat50[0])
+            .attr("x2", xat50[0])
+            .attr("y1", y(0))
+            .attr("y2", y(0.5));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+ xat50[0] +","+y(0.1)+")rotate(-90)")
+            .text("AVERAGE ADDITIONAL YEARS");
+
+// 50% chance
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", x(0))
+            .attr("x2", xat50[0])
+            .attr("y1", y(0.5))
+            .attr("y2", y(0.5));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+x(0)+","+y(0.5+.006)+")")
+            .text("AVERAGE CHANCE");
+
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", xat50[0])
+            .attr("x2", xat50[0])
+            .attr("y1", y(0))
+            .attr("y2", y(0.5));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+ xat50[0] +","+y(0.1)+")rotate(-90)")
+            .text("AVERAGE ADDITIONAL YEARS");
+
+// 90% chance
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", x(0))
+            .attr("x2", xat90[0])
+            .attr("y1", y(0.9))
+            .attr("y2", y(0.9));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+x(0)+","+y(0.9+.006)+")")
+            .text("VERY HIGH CHANCE");
+
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", xat90[0])
+            .attr("x2", xat90[0])
+            .attr("y1", y(0))
+            .attr("y2", y(0.9));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+ xat90[0] +","+y(0.1)+")rotate(-90)")
+            .text("90% ADDITIONAL YEARS");
+
+// 10% chance
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", x(0))
+            .attr("x2", xat10[0])
+            .attr("y1", y(0.1))
+            .attr("y2", y(0.1));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+x(0)+","+y(0.1+.006)+")")
+            .text("A SMALL CHANCE");
+
+svg.append("line")
+      .attr("class", "annotation")
+            .attr("x1", xat10[0])
+            .attr("x2", xat10[0])
+            .attr("y1", y(0))
+            .attr("y2", y(0.1));
+svg.append("text")
+            .attr("class", "annotation")
+            .attr("transform", "translate("+ xat10[0] +","+y(0.1)+")rotate(-90)")
+            .text("10% ADDITIONAL YEARS");
+
+    // First simulation and move.
+var end_age = simOneLife(USER_AGE, USER_SEX, life);
+var indicatorPoint = svg.append("circle")
+        .attr("r", circle_radius)
+        .attr("transform", function() {
+                return "translate(" + x(end_age-USER_AGE) + "," + y(life[end_age].this_prob) + ")";
+        });
+
+indicatorPoint.transition()
+            .duration(3250)
+            .style('opacity',0)
+            .attr("fill", "green")
+            .remove();
+
+
+
+var indicatorText = svg.append("text")
+        .style('opacity',0)
+        .attr("transform", function() {
+                return "translate(" + x(end_age-USER_AGE) + "," + y(life[end_age].this_prob) + ")";
+        })
+        .text(end_age);
+indicatorText.transition()
+            .duration(4250)
+            .style('opacity',1);
+
+//svg.select("circle").remove();
+//svg.append("text")
+//            .attr("class", "annotation")
+//            .attr("transform", "translate("+ xat10[0] +","+y(0.1)+")rotate(-90)")
+//            .text("DUMMY");
+
+
+
+function findXatY( y, linePath) {
+    function getXY(len) {
+       var pathEl = linePath.node();
+       var point = pathEl.getPointAtLength(len);
+       point.y = (height - point.y)/height;
+// don't want this        point.x = (120-USER_AGE)*point.x/width;
+       return([point.x, point.y]);
+    }
+    var curlen = .0;
+    len_inc = Math.sqrt(height*height + width*width)*.005;
+    while (getXY(curlen)[1] > y)  {curlen += len_inc;}
+    return(getXY(curlen))
+}
 
 
 </script>
